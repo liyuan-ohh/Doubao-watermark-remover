@@ -1,0 +1,14 @@
+{
+  "pages": [
+    "pages/index/index"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#20b86a",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "豆包去水印",
+    "backgroundColor": "#f5f7f6"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

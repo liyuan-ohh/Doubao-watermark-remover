@@ -1,0 +1,86 @@
+<view class="page">
+  <view class="hero">
+    <view class="hero-title">干净、简单地去水印</view>
+    <view class="hero-subtitle">豆包视频解析 · 手动框选图片水印</view>
+  </view>
+
+  <view class="tabs">
+    <view class="tab {{mode === 'video' ? 'active' : ''}}" data-mode="video" bindtap="switchMode">豆包链接</view>
+    <view class="tab {{mode === 'image' ? 'active' : ''}}" data-mode="image" bindtap="switchMode">图片去水印</view>
+  </view>
+
+  <view wx:if="{{mode === 'video'}}" class="card">
+    <view class="section-title">粘贴豆包分享链接</view>
+    <textarea
+      class="link-input"
+      maxlength="-1"
+      placeholder="支持包含文案的完整分享内容"
+      value="{{shareText}}"
+      bindinput="onShareInput"
+      disabled="{{parsing}}"
+    ></textarea>
+    <view class="tool-row">
+      <button class="minor-button" bindtap="pasteLink" disabled="{{parsing}}">粘贴</button>
+      <button class="minor-button danger" bindtap="clearLink" disabled="{{parsing || !shareText}}">清空</button>
+    </view>
+    <button class="primary-button" bindtap="parseVideo" loading="{{parsing}}" disabled="{{parsing}}">
+      {{parsing ? "正在解析…" : "一键解析"}}
+    </button>
+
+    <view wx:if="{{videoResult}}" class="result">
+      <view class="result-title">原视频已解析</view>
+      <video
+        class="video"
+        src="{{videoResult.url}}"
+        poster="{{videoResult.poster_url}}"
+        controls="{{true}}"
+        show-center-play-btn="{{true}}"
+      />
+      <button class="primary-button" bindtap="saveVideo" loading="{{savingVideo}}" disabled="{{savingVideo}}">
+        {{savingVideo ? "正在保存…" : "保存视频到相册"}}
+      </button>
+    </view>
+  </view>
+
+  <view wx:else class="card">
+    <view class="section-title">选择图片并框选水印</view>
+    <view class="hint">在图片上拖动一个矩形，尽量只包住需要消除的区域。</view>
+    <button class="choose-button" bindtap="chooseImage" disabled="{{repairing}}">
+      {{imagePath ? "重新选择图片" : "选择图片"}}
+    </button>
+
+    <view
+      wx:if="{{imagePath}}"
+      id="selection-stage"
+      class="selection-stage"
+      catchtouchstart="selectionStart"
+      catchtouchmove="selectionMove"
+      catchtouchend="selectionEnd"
+      catchtouchcancel="selectionEnd"
+    >
+      <image id="source-image" class="source-image" src="{{imagePath}}" mode="widthFix" bindload="onImageLoad" />
+      <view
+        wx:if="{{selection}}"
+        class="selection-box"
+        style="left:{{selection.left}}px;top:{{selection.top}}px;width:{{selection.width}}px;height:{{selection.height}}px;"
+      />
+    </view>
+
+    <view wx:if="{{imagePath}}" class="tool-row">
+      <button class="minor-button" bindtap="clearSelection" disabled="{{repairing || !selection}}">重新框选</button>
+      <button class="primary-button grow" bindtap="repairImage" loading="{{repairing}}" disabled="{{repairing}}">
+        {{repairing ? "正在修复…" : "开始修复"}}
+      </button>
+    </view>
+
+    <view wx:if="{{resultUrl}}" class="result">
+      <view class="result-title">修复结果</view>
+      <image class="result-image" src="{{resultUrl}}" mode="widthFix" />
+      <button class="primary-button" bindtap="saveImage" loading="{{savingImage}}" disabled="{{savingImage}}">
+        {{savingImage ? "正在保存…" : "保存图片到相册"}}
+      </button>
+    </view>
+  </view>
+
+  <view class="privacy-note">图片和链接只发送到你电脑上的本地服务</view>
+</view>
