@@ -1,5 +1,5 @@
 {
-  "appid": "touristappid",
+  "appid": "wx5ce337f6e35cd2bf",
   "compileType": "miniprogram",
   "libVersion": "3.17.0",
   "packOptions": {
@@ -24,12 +24,23 @@
       "ignore": [],
       "disablePlugins": [],
       "outputPath": ""
-    }
+    },
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": false,
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false
   },
   "condition": {},
   "editorSetting": {
     "tabIndent": "insertSpaces",
     "tabSize": 2
   },
-  "projectArchitecture": "miniProgram"
+  "projectArchitecture": "miniProgram",
+  "simulatorPluginLibVersion": {}
 }
