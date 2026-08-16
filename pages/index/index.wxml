@@ -82,5 +82,5 @@
     </view>
   </view>
 
-  <view class="privacy-note">图片和链接只发送到你电脑上的本地服务</view>
+  <view class="privacy-note">图片和链接仅发送到云端服务进行处理</view>
 </view>

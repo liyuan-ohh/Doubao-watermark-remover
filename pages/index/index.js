@@ -1,4 +1,4 @@
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://doubao1-297682-7-1463813300.sh.run.tcloudbase.com";
 
 Page({
   data: {
@@ -58,7 +58,7 @@ Page({
           this.showError(res.data, "解析失败，请检查链接后重试");
         }
       },
-      fail: () => this.showError(null, "连接不到本地服务，请先启动后端"),
+      fail: () => this.showError(null, "网络服务连接失败，请稍后重试"),
       complete: () => this.setData({ parsing: false })
     });
   },
@@ -202,7 +202,7 @@ Page({
           this.showError(data, "修复失败，请调整框选区域后重试");
         }
       },
-      fail: () => this.showError(null, "连接不到本地服务，请先启动后端"),
+      fail: () => this.showError(null, "网络服务连接失败，请稍后重试"),
       complete: () => this.setData({ repairing: false })
     });
   },
