@@ -4,6 +4,7 @@ Page({
     shareText: "",
     parsing: false,
     videoResult: null,
+    videoPreviewPath: "",
     savingVideo: false,
     imagePath: "",
     imageWidth: 0,
@@ -34,7 +35,7 @@ Page({
 
   clearLink() {
     if (!this.data.parsing) {
-      this.setData({ shareText: "", videoResult: null });
+      this.setData({ shareText: "", videoResult: null, videoPreviewPath: "" });
     }
   },
 
@@ -49,7 +50,12 @@ Page({
     wx.cloud.callFunction({
       name: "mediaGateway",
       data: { action: "parseVideo", text },
-      success: ({ result }) => this.setData({ videoResult: result }),
+      success: ({ result }) => {
+        this.setData({ videoResult: result, videoPreviewPath: "" });
+        this.downloadCloudFile(result, (filePath) => {
+          this.setData({ videoPreviewPath: filePath });
+        }, () => this.showError(null, "视频预览加载失败，可直接保存到相册"));
+      },
       fail: (error) => this.showError(error, "云端解析失败，请稍后重试"),
       complete: () => this.setData({ parsing: false })
     });

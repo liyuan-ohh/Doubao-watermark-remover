@@ -31,8 +31,7 @@
       <view class="result-title">原视频已解析</view>
       <video
         class="video"
-        src="{{videoResult.url}}"
-        poster="{{videoResult.poster_url}}"
+        src="{{videoPreviewPath}}"
         controls="{{true}}"
         show-center-play-btn="{{true}}"
       />
