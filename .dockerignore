@@ -1,0 +1,6 @@
+.git/
+backend/.venv/
+backend/__pycache__/
+backend/outputs/
+project.private.config.json
+*.pyc
