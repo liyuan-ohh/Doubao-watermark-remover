@@ -94,8 +94,9 @@ class ApiTests(unittest.TestCase):
             data={"x": 35, "y": 25, "width": 30, "height": 20},
         )
         self.assertEqual(result.status_code, 200)
+        output_path = OUTPUT_DIR / result.json()["url"].rsplit("/", 1)[-1]
         output = cv2.imdecode(
-            np.frombuffer((OUTPUT_DIR / "latest.png").read_bytes(), np.uint8),
+            np.frombuffer(output_path.read_bytes(), np.uint8),
             cv2.IMREAD_COLOR,
         )
         self.assertIsNotNone(output)

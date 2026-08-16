@@ -1,4 +1,5 @@
 import re
+import uuid
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
@@ -129,8 +130,8 @@ async def inpaint_image(
     mask = np.zeros((image_height, image_width), dtype=np.uint8)
     mask[y : y + height, x : x + width] = 255
     result = cv2.inpaint(source, mask, 3, cv2.INPAINT_TELEA)
-    output = OUTPUT_DIR / "latest.png"
-    # ponytail: one shared result is intentional for local single-user use.
+    filename = f"{uuid.uuid4().hex}.png"
+    output = OUTPUT_DIR / filename
     try:
         encoded, png = cv2.imencode(".png", result)
     except cv2.error as exc:
@@ -141,4 +142,4 @@ async def inpaint_image(
         output.write_bytes(png.tobytes())
     except OSError as exc:
         raise HTTPException(500, "结果图片保存失败，请检查目录权限") from exc
-    return {"url": "/files/latest.png", "width": image_width, "height": image_height}
+    return {"url": f"/files/{filename}", "width": image_width, "height": image_height}

@@ -1,11 +1,16 @@
 {
   "appid": "wx5ce337f6e35cd2bf",
   "compileType": "miniprogram",
+  "cloudfunctionRoot": "cloudfunctions/",
   "libVersion": "3.17.0",
   "packOptions": {
     "ignore": [
       {
         "value": "backend",
+        "type": "folder"
+      },
+      {
+        "value": "cloudfunctions",
         "type": "folder"
       }
     ],

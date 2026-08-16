@@ -1,5 +1,3 @@
-const API_BASE = "https://doubao1-297682-7-1463813300.sh.run.tcloudbase.com";
-
 Page({
   data: {
     mode: "video",
@@ -13,6 +11,7 @@ Page({
     selection: null,
     repairing: false,
     resultUrl: "",
+    resultFileID: "",
     savingImage: false
   },
 
@@ -47,46 +46,30 @@ Page({
       return;
     }
     this.setData({ parsing: true });
-    wx.request({
-      url: `${API_BASE}/api/video/parse`,
-      method: "POST",
-      data: { text },
-      success: (res) => {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          this.setData({ videoResult: res.data });
-        } else {
-          this.showError(res.data, "解析失败，请检查链接后重试");
-        }
-      },
-      fail: () => this.showError(null, "网络服务连接失败，请稍后重试"),
+    wx.cloud.callFunction({
+      name: "mediaGateway",
+      data: { action: "parseVideo", text },
+      success: ({ result }) => this.setData({ videoResult: result }),
+      fail: (error) => this.showError(error, "云端解析失败，请稍后重试"),
       complete: () => this.setData({ parsing: false })
     });
   },
 
   saveVideo() {
-    const url = this.data.videoResult && this.data.videoResult.url;
-    if (!url || this.data.savingVideo) return;
+    const result = this.data.videoResult;
+    if (!result || !result.fileID || this.data.savingVideo) return;
     this.setData({ savingVideo: true });
-    wx.downloadFile({
-      url,
-      success: (res) => {
-        if (res.statusCode !== 200) {
-          this.showError(null, "视频下载失败，请重试");
-          this.setData({ savingVideo: false });
-          return;
-        }
+    this.downloadCloudFile(result, (filePath) => {
         wx.saveVideoToPhotosAlbum({
-          filePath: res.tempFilePath,
+          filePath,
           success: () => wx.showToast({ title: "已保存到相册" }),
           fail: () => this.showError(null, "保存失败，请检查相册权限"),
           complete: () => this.setData({ savingVideo: false })
         });
-      },
-      fail: () => {
+      }, () => {
         this.showError(null, "视频下载失败，请重试");
         this.setData({ savingVideo: false });
-      }
-    });
+      });
   },
 
   chooseImage() {
@@ -103,7 +86,8 @@ Page({
             imageWidth: info.width,
             imageHeight: info.height,
             selection: null,
-            resultUrl: ""
+            resultUrl: "",
+            resultFileID: ""
           }),
           fail: () => this.showError(null, "图片读取失败，请换一张图片")
         });
@@ -157,7 +141,9 @@ Page({
   },
 
   clearSelection() {
-    if (!this.data.repairing) this.setData({ selection: null, resultUrl: "" });
+    if (!this.data.repairing) {
+      this.setData({ selection: null, resultUrl: "", resultFileID: "" });
+    }
   },
 
   repairImage() {
@@ -183,58 +169,70 @@ Page({
       return;
     }
     this.setData({ repairing: true });
-    wx.uploadFile({
-      url: `${API_BASE}/api/image/inpaint`,
+    const extension = (this.data.imagePath.match(/\.([a-zA-Z0-9]+)(?:\?|$)/) || [])[1] || "jpg";
+    const cloudPath = `uploads/${Date.now()}-${Math.random().toString(16).slice(2)}.${extension}`;
+    wx.cloud.uploadFile({
+      cloudPath,
       filePath: this.data.imagePath,
-      name: "image",
-      formData: { x, y, width, height },
-      success: (res) => {
-        let data;
-        try {
-          data = JSON.parse(res.data);
-        } catch (_) {
-          data = null;
-        }
-        if (res.statusCode >= 200 && res.statusCode < 300 && data) {
-          const url = data.url.startsWith("http") ? data.url : `${API_BASE}${data.url}`;
-          this.setData({ resultUrl: `${url}?t=${Date.now()}` });
-        } else {
-          this.showError(data, "修复失败，请调整框选区域后重试");
-        }
+      success: ({ fileID }) => {
+        wx.cloud.callFunction({
+          name: "mediaGateway",
+          data: { action: "repairImage", fileID, x, y, width, height },
+          success: ({ result }) => this.setData({
+            resultUrl: result.tempFileURL,
+            resultFileID: result.fileID
+          }),
+          fail: (error) => this.showError(error, "修复失败，请调整框选区域后重试"),
+          complete: () => this.setData({ repairing: false })
+        });
       },
-      fail: () => this.showError(null, "网络服务连接失败，请稍后重试"),
-      complete: () => this.setData({ repairing: false })
+      fail: () => {
+        this.showError(null, "图片上传失败，请稍后重试");
+        this.setData({ repairing: false });
+      }
     });
   },
 
   saveImage() {
-    if (!this.data.resultUrl || this.data.savingImage) return;
+    if (!this.data.resultFileID || this.data.savingImage) return;
     this.setData({ savingImage: true });
-    wx.downloadFile({
-      url: this.data.resultUrl,
-      success: (res) => {
-        if (res.statusCode !== 200) {
-          this.showError(null, "结果图片下载失败");
-          this.setData({ savingImage: false });
-          return;
-        }
+    this.downloadCloudFile({
+      fileID: this.data.resultFileID,
+      tempFileURL: this.data.resultUrl
+    }, (filePath) => {
         wx.saveImageToPhotosAlbum({
-          filePath: res.tempFilePath,
+          filePath,
           success: () => wx.showToast({ title: "已保存到相册" }),
           fail: () => this.showError(null, "保存失败，请检查相册权限"),
           complete: () => this.setData({ savingImage: false })
         });
-      },
-      fail: () => {
+      }, () => {
         this.showError(null, "结果图片下载失败");
         this.setData({ savingImage: false });
-      }
+      });
+  },
+
+  downloadCloudFile(result, success, fail) {
+    wx.cloud.downloadFile({
+      fileID: result.fileID,
+      success: ({ tempFilePath }) => success(tempFilePath),
+      fail: () => wx.downloadFile({
+        url: result.tempFileURL,
+        success: (response) => response.statusCode === 200
+          ? success(response.tempFilePath)
+          : fail(),
+        fail
+      })
     });
   },
 
   showError(data, fallback) {
     wx.showToast({
-      title: data && typeof data.detail === "string" ? data.detail : fallback,
+      title: data && typeof data.detail === "string"
+        ? data.detail
+        : data && typeof data.errMsg === "string" && data.errMsg.includes(":")
+          ? data.errMsg.split(":").slice(1).join(":").trim()
+          : fallback,
       icon: "none",
       duration: 2600
     });
